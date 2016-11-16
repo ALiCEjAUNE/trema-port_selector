@@ -1,5 +1,4 @@
 class PortSelector < Trema::Controller
-  @@Selectport = 2
   @@portlist = [2,3]  
   def start(_args)
     logger.info 'PortSelector started.'
@@ -18,17 +17,17 @@ class PortSelector < Trema::Controller
 
   def packet_in(datapath_id, packet_in)
     logger.info "#{datapath_id.to_hex},flow_mod_set!"
-    logger.info "パケットが来たポートは#{packet_in.in_port}"
-    
-    sendlist = []
+    logger.info "パケットが来たポートは#{packet_in.in_port}"    
+    sendport = []
     @@portlist.each do |num|
-      sendlist << SendOutPort.new(num)
+      sendport << SendOutPort.new(num)
     end
+
      send_flow_mod_add(
        datapath_id,
        idle_timeout: 0,
        match: ExactMatch.new(packet_in),
-       actions: sendlist
+       actions: sendport
        #actions: [SendOutPort.new(2),SendOutPort.new(3)] #複数action指定時などは配列
       )
 
