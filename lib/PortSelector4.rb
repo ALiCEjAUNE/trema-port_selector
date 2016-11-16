@@ -8,33 +8,14 @@ class PortSelector < Trema::Controller
   end
 
   def switch_ready(datapath_id)
-    send_flow_mod_add(
-    datapath_id,
-      priority: 100,
-      match: Match.new(destination_mac_address: '01:80:C2:00:00:00') #Drop STP Flame
-    )
     logger.info "Hello switch #{datapath_id.to_hex}!"
-    send_message datapath_id, Features::Request.new
+    aliveport = rand(1..3)
+    puts "aliveport is #{aliveport}"
 
-    send_flow_mod_add(
-       datapath_id,
-       idle_timeout: 0,
-       match: Match.new(ether_type: 0x0800, source_ip_address: '192.168.0.1/32' ),
-       #actions: sendport
-       actions: [SendOutPort.new(2),SendOutPort.new(3)] #複数action指定時などは配列
-    )
-    send_flow_mod_add(
-       datapath_id,
-       idle_timeout: 0,
-       match: Match.new(
-                ether_type: 0x0800,
-                ip_protocol: 17, #1(ICMP),6(TCP),17(UDP)
-                source_ip_address: '192.168.0.2/32',
-                transport_destination_port: 5001
-              ),
-       #actions: sendport
-       actions: [SendOutPort.new(1),SendOutPort.new(3)] #複数action指定時などは配列
-    )
+    send_message datapath_id, Features::Request.new
+    
+    send_flow_mod_add( datapath_id, match: Match.new(in_port: 1), actions: SendOutPort.new(aliveport) )
+    send_flow_mod_add( datapath_id, match: Match.new(in_port: aliveport), actions: SendOutPort.new(1) )
   end
 
   def packet_in(datapath_id, packet_in)
@@ -44,14 +25,19 @@ class PortSelector < Trema::Controller
     logger.info "パケットの種類は#{packet_in.ip_protocol}"
     logger.info "パケットの宛先ポートは#{packet_in.transport_destination_port}"
     
-    if packet_in.source_ip_address == '192.168.0.2' then
-      if packet_in.transport_destination_port == 5000 then
-        send_flow_mod_add()
-      elsif packet_in.transport_destination_port == 5001 then
-        send_flow_mod_add()
+    if packet_in.source_ip_address == '192.168.0.4' then
+      send_flow_mod_delete( datapath_id, match: Match.new() ) #すべてのフローを削除
+      aliveport = rand(1..3)
+      puts "aliveport is #{aliveport}"
+      if packet_in.transport_destination_port == 5001 then
+        aliveport = 1
       elsif packet_in.transport_destination_port == 5002 then
-        send_flow_mod_add()
+        aliveport = 2
+      elsif packet_in.transport_destination_port == 5003 then
+        aliveport = 3
       end
+      send_flow_mod_add( datapath_id, match: Match.new(in_port: 1), actions: SendOutPort.new(aliveport) )
+      send_flow_mod_add( datapath_id, match: Match.new(in_port: aliveport), actions: SendOutPort.new(1) )
     end
 
 #    send_packet_out( #Packet_outはflowを設定する最初だけパケットがコントローラに行ってしまうので、それをhostに送り返す用
