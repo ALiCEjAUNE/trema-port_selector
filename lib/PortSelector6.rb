@@ -16,15 +16,16 @@ class PortSelector < Trema::Controller
 
     send_message datapath_id, Features::Request.new
     
-#    send_flow_mod_add(datapath_id, math: Match.new(ether_type: 34525)) #ipv6(0x86dd or 34525) DROP 
-    send_flow_mod_add( datapath_id, match: Match.new(in_port: 1), actions: SendOutPort.new(aliveport) )
-    send_flow_mod_add( datapath_id, match: Match.new(in_port: aliveport), actions: SendOutPort.new(1) )
+    ipv6_drop_flow(datapath_id)
+    port_select_flow(datapath_id,1,aliveport)
   end
+
+
 
   def packet_in(datapath_id, packet_in)
     logger.info "スイッチ#{datapath_id.to_hex}にフローエントリに該当しないパケットが到来"
     logger.info "パケットが来たポートは#{packet_in.in_port}"    
-#    logger.info "パケットの中身は#{packet_in.data}"
+    logger.info "パケットの中身は#{packet_in.data}"
     logger.info "パケットの送信元macは#{packet_in.source_mac}"
 #    logger.info "パケットの種類は#{packet_in.ip_protocol}"
 #    logger.info "パケットの宛先ポートは#{packet_in.transport_destination_port}"
@@ -51,8 +52,8 @@ class PortSelector < Trema::Controller
           else
             logger.info "Port number is incorrect. Set random port."
           end
-          send_flow_mod_add( datapath_id, match: Match.new(in_port: 1), actions: SendOutPort.new(aliveport) )
-          send_flow_mod_add( datapath_id, match: Match.new(in_port: aliveport), actions: SendOutPort.new(1) )
+          ipv6_drop_flow(datapath_id)
+          port_select_flow(datapath_id,1,aliveport)
           puts "aliveport is #{aliveport}"
         end
       else
@@ -95,4 +96,20 @@ class PortSelector < Trema::Controller
     end
   end
 
+  def ipv6_drop_flow datapath_id
+    send_flow_mod_add( datapath_id, match: Match.new(destination_mac_address: '33:33:00:00:00:02')) #ipv6 DROP 
+    send_flow_mod_add( datapath_id, match: Match.new(destination_mac_address: '33:33:00:00:00:16')) #ipv6 DROP
+
+#    mac = [0x52, 0x42, 0x00, 0x00, 0x00, 0x00]
+#    mac_2 =  (["%02x"] * 6).join(":") %mac
+#    puts mac_2
+#    if mac_2 == '52:42:00:00:00:00'
+#      puts "woooo!"
+#    end   
+  end
+  
+  def port_select_flow datapath_id,host_port,set_port
+    send_flow_mod_add( datapath_id, match: Match.new(in_port: host_port), actions: SendOutPort.new(set_port) )
+    send_flow_mod_add( datapath_id, match: Match.new(in_port: set_port), actions: SendOutPort.new(host_port) )
+  end  
 end
