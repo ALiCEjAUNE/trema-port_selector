@@ -43,6 +43,8 @@ class PortSelector < Trema::Controller
             aliveport = 2
           elsif packet_in.transport_destination_port == 50003 then
             aliveport = 3
+          else
+            logger.info "Port number is incorrect. Set random port."
           end
           send_flow_mod_add( datapath_id, match: Match.new(in_port: 1), actions: SendOutPort.new(aliveport) )
           send_flow_mod_add( datapath_id, match: Match.new(in_port: aliveport), actions: SendOutPort.new(1) )
