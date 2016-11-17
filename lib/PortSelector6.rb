@@ -2,7 +2,7 @@ require 'pio'
 
 class PortSelector < Trema::Controller
 
-  @@portlist = Array(1..3)
+  @@portlist = Array(2..4)
   @@aliveport_init = rand(1..3)
   def start(_args)
     logger.info 'PortSelector started.'
@@ -31,19 +31,23 @@ class PortSelector < Trema::Controller
     
 
     unless packet_in.ether_type == 34525 then
-      puts "パケットの種類は#{packet_in.ether_type}"
+      logger.info "パケットの種類は#{packet_in.ether_type}"
       unless packet_in.ether_type == 2054 then
-        puts "ipv4パケット プロトコルは #{packet_in.ip_protocol}(6:TCP,17:UDP)"
-        puts "パケットの中身は#{packet_in.data}"
-        if packet_in.source_ip_address == '192.168.0.4' then
+        rest = packet_in.rest[4..-2]
+        logger.info "ipv4パケット プロトコルは#{packet_in.ip_protocol}(6:TCP,17:UDP)"
+        logger.info "パケットの中身は"
+        puts rest
+
+        if packet_in.source_ip_address == '192.168.0.5' then
           send_flow_mod_delete( datapath_id, match: Match.new() ) #すべてのフローを削除
           aliveport = rand(1..3)
-          if packet_in.transport_destination_port == 50001 then
-            aliveport = 1
-          elsif packet_in.transport_destination_port == 50002 then
-            aliveport = 2
-          elsif packet_in.transport_destination_port == 50003 then
-            aliveport = 3
+          case rest.to_i
+          when 1 
+            aliveport = @@portlist[0]
+          when 2
+            aliveport = @@portlist[1]
+          when 3
+            aliveport = @@portlist[2]
           else
             logger.info "Port number is incorrect. Set random port."
           end
@@ -52,10 +56,10 @@ class PortSelector < Trema::Controller
           puts "aliveport is #{aliveport}"
         end
       else
-        puts "Oops! ARP! #{packet_in.data}"
+#        puts "Oops! ARP! #{packet_in.data}"
         case packet_in.data
         when Arp::Request
-          puts "ARP Request is arrived"
+          logger.info "ARP Request has arrived.#{packet_in.data}"
           arp_request = packet_in.data
           puts "source_mac=#{arp_request.source_mac},target=#{arp_request.target_protocol_address},sender=#{arp_request.sender_protocol_address}"
           replydata = Arp::Reply.new(
@@ -72,7 +76,7 @@ class PortSelector < Trema::Controller
             actions: SendOutPort.new(packet_in.in_port)
           )
         else
-          puts "ERROR"
+          puts "Not Arp::Request"
         end
       end
     else
