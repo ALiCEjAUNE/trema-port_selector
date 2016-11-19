@@ -1,5 +1,6 @@
 require 'pio'
 #require_relative "pio-l4hdr"
+
 class PortSelector < Trema::Controller
 
   @@portlist = Array(2..4)
@@ -83,7 +84,8 @@ class PortSelector < Trema::Controller
         port_select_flow( @@switchlist, 1, aliveport)
         logger.info "aliveport is #{aliveport}"
     end
-    
+  end
+  
   def ipv6_drop_flow datapath_id
     send_flow_mod_add( datapath_id, priority: 100, match: Match.new(ether_type: 34525))
   end
