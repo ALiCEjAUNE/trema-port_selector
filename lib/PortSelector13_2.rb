@@ -52,12 +52,12 @@ class PortSelector < Trema::Controller
 #          send_flow_mod_delete( datapath_id, match: Match.new() ) #すべてのフローを削除
           delete_flow( @@switchlist, 1, @@setport )
           aliveport = @@portlist[rand(0..2)]
-          case rest.to_i
-          when 1 
+          case packet_in.transport_destination_port
+          when 50000
             aliveport = @@portlist[0]
-          when 2
+          when 50001
             aliveport = @@portlist[1]
-          when 3
+          when 50002
             aliveport = @@portlist[2]
           else
             logger.info "Port number is incorrect. Set random port."
