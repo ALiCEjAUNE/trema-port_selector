@@ -1,5 +1,4 @@
 require 'pio'
-#require_relative "pio-l4hdr"
 
 class PortSelector < Trema::Controller
 
@@ -28,10 +27,9 @@ class PortSelector < Trema::Controller
 #    logger.info "パケットの中身は#{packet_in.data}"
 #    logger.info "パケットの送信元macは#{packet_in.source_mac}"
 #    logger.info "パケットの種類は#{packet_in.ip_protocol}"
-#    logger.info "パケットのタイプは#{packet_in.ether_type}"
 #    logger.info "パケットの宛先ポートは#{packet_in.transport_destination_port}"
     
-
+   if packet_in.in_port == 5 then
     case packet_in.ether_type
     when 34525
       puts "IPv6,dropped. #{packet_in.ether_type}"
@@ -65,10 +63,10 @@ class PortSelector < Trema::Controller
 #      end
 #      logger.info "ipv4パケット プロトコルは#{packet_in.ip_protocol}(6:TCP,17:UDP)"
 #      logger.info "パケットの中身は"
-      puts rest
+#      puts rest
 #      puts packet_in.rest
 #      send_flow_mod_delete( datapath_id, match: Match.new() ) #すべてのフローを削除
-      delete_flow( @@switchlist, 1, @@setport )
+      oldport = @@setport
         aliveport = @@portlist[rand(0..2)]
         case rest.to_i
         when 1
@@ -83,17 +81,22 @@ class PortSelector < Trema::Controller
         @@setport = aliveport
 #        ipv6_drop_flow(datapath_id)
         port_select_flow( @@switchlist, 1, aliveport)
+        unless aliveport == oldport then
+          delete_flow( @@switchlist, oldport )
+        end
         logger.info "aliveport is #{aliveport}"
     end
+   end
   end
   
   def ipv6_drop_flow datapath_id
-    send_flow_mod_add( datapath_id, priority: 100, match: Match.new(ether_type: 34525))
+    send_flow_mod_add( datapath_id, priority: 100, match: Match.new(ether_type: 0x86dd))
   end
   
-  def delete_flow swid,host_port,now_port
+#  def delete_flow swid,host_port,now_port
+   def delete_flow swid,now_port
       swid.each do |datapath_id|
-        send_flow_mod_delete( datapath_id, match: Match.new(in_port: host_port))
+#        send_flow_mod_delete( datapath_id, match: Match.new(in_port: host_port))
         send_flow_mod_delete( datapath_id, match: Match.new(in_port: now_port))
       end
   end
@@ -102,14 +105,14 @@ class PortSelector < Trema::Controller
         send_flow_mod_add( datapath_id,
                          priority: 10,
                          match: Match.new(in_port: host_port),
-                         instructions: Apply.new(SendOutPort.new(set_port)))
+                         actions: SendOutPort.new(set_port))
         send_flow_mod_add( datapath_id,
                          priority: 10,
                          match: Match.new(in_port: set_port),
-                         instructions: Apply.new(SendOutPort.new(host_port)))
-        send_flow_mod_add( datapath_id,
-                         match: Match.new(in_port: 5,),  # ether_type: 0x0800 ),  #port5のみpacket_inを受付
-                         instructions: Apply.new(SendOutPort.new(:controller)))
+                         actions: SendOutPort.new(host_port))
+#        send_flow_mod_add( datapath_id,
+#                         match: Match.new(in_port: 5, ether_type: 0x0800 ),  #port5のみpacket_inを受付
+#                         actions: SendOutPort.new(:controller))
   end
 
 
@@ -118,11 +121,11 @@ class PortSelector < Trema::Controller
           send_flow_mod_add( datapath_id,
                          priority: 10,
                          match: Match.new(in_port: host_port), 
-                         instructions: Apply.new(SendOutPort.new(set_port)))
+                         actions: SendOutPort.new(set_port))
           send_flow_mod_add( datapath_id,
                          priority: 10,
                          match: Match.new(in_port: set_port),
-                         instructions: Apply.new(SendOutPort.new(host_port)))
+                         actions: SendOutPort.new(host_port))
         end 
   end
 end
