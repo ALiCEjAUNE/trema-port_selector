@@ -2,20 +2,20 @@ require 'pio'
 
 class PortSelector < Trema::Controller
 
-#  @@portlist = Array(2..4)
-  PORTLIST = Array(2..4)
+  HOSTPORT = 1
+  HOSTPORT.freeze
+  LMMPORT = 5
+  LMMPORT.freeze
+  PORTLIST = [2 3 4]
   PORTLIST.freeze
-#  @@switchlist = [0xabd,0x111]
   SWITCHLIST = [0xabd,0x111]
   SWITCHLIST.freeze
-#  @@setport = @@portlist[rand(0..2)]
   @@setport = PORTLIST[rand(0..2)]
-
 
   def start(_args)
     logger.info 'PortSelector started.'
-    puts "Selected port, #{PORTLIST}"
-    puts "Switch List, #{SWITCHLIST}" 
+    logger.info "Selected port, #{PORTLIST}"
+    logger.info "Switch List, #{SWITCHLIST}" 
   end
 
   def switch_ready(datapath_id)
@@ -23,12 +23,12 @@ class PortSelector < Trema::Controller
     logger.info "Hello switch #{datapath_id.to_hex}!"
     logger.info "aliveport is #{aliveport}"   
     ipv6_drop_flow(datapath_id)
-    port_select_flow_ready(datapath_id,1,aliveport)
+    port_select_flow_ready(datapath_id,H,aliveport)
   end
 
   def packet_in(datapath_id, packet_in)
 #   putlog(datapath_id,packet_in)   
-   if packet_in.in_port == 5 then
+   if packet_in.in_port == LMMPORT then
     case packet_in.ether_type
     when 34525
       puts "IPv6,dropped. #{packet_in.ether_type}"
@@ -68,13 +68,13 @@ class PortSelector < Trema::Controller
         end
         @@setport = aliveport
         unless aliveport == oldport then
-          port_select_flow(SWITCHLIST, 1,oldport,aliveport  )
+          port_select_flow(SWITCHLIST, HOSTPORT,oldport,aliveport  )
         end
 #        logger.info "aliveport is #{aliveport}"
     end
    end
   end
-  
+###############フローエントリ用メソッド########################33  
   def ipv6_drop_flow datapath_id
     send_flow_mod_add( datapath_id, priority: 100, match: Match.new(ether_type: 0x86dd))
   end
