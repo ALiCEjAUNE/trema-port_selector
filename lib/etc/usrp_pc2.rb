@@ -40,7 +40,7 @@ loop do
       when 3 then
         udp3.send(i.to_s, 0, sockaddr3)
       end
-      puts (i+1)
+#      puts (i+1)
     else 
       puts "NO channel change"
     end

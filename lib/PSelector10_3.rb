@@ -27,7 +27,10 @@ class PortSelector < Trema::Controller
   end
 
   def packet_in(datapath_id, packet_in)
-#   putlog(datapath_id,packet_in)   
+#   putlog(datapath_id,packet_in)
+   unless packet_in.in_port == LMMPORT then
+     logger.info "通常ポートからパケット到来!#{packet_in.data}"
+   end    
    if packet_in.in_port == LMMPORT then
     case packet_in.ether_type
     when 34525
@@ -94,35 +97,35 @@ class PortSelector < Trema::Controller
   end
 
   def port_select_flow swid,packet_in,host_port,old_port,set_port
-    @@flow1_2_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[0]) 
-    @@flow1_3_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[1])     
-    @@flow1_4_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[2])
-    @@flow1_2_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[0]) 
-    @@flow1_3_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[1])     
-    @@flow1_4_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[2])
+#    @@flow1_2_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[0]) 
+#    @@flow1_3_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[1])     
+#    @@flow1_4_0800 ||= create_flow_mod_binary(1000,host_port,0x0800,PORTLIST[2])
+#    @@flow1_2_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[0]) 
+#    @@flow1_3_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[1])     
+#    @@flow1_4_2054 ||= create_flow_mod_binary(1000,host_port,2054,PORTLIST[2])
     @@flow1_2 ||= create_flow_mod_binary2(10,host_port,PORTLIST[0]) 
     @@flow1_3 ||= create_flow_mod_binary2(10,host_port,PORTLIST[1])     
     @@flow1_4 ||= create_flow_mod_binary2(10,host_port,PORTLIST[2])
-    @@dflow1_2_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[0]) 
-    @@dflow1_3_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[1])     
-    @@dflow1_4_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[2])
-    @@dflow1_2_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[0]) 
-    @@dflow1_3_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[1])     
-    @@dflow1_4_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[2])
+#    @@dflow1_2_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[0]) 
+#    @@dflow1_3_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[1])     
+#    @@dflow1_4_0800 ||= delete_flow_mod_binary(host_port,0x0800,PORTLIST[2])
+#    @@dflow1_2_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[0]) 
+#    @@dflow1_3_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[1])     
+#    @@dflow1_4_2054 ||= delete_flow_mod_binary(host_port,2054,PORTLIST[2])
 
-    swid.each do |datapath_id|
-      case old_port
-      when PORTLIST[0]
-        send_message datapath_id, @@flow1_2_0800
-        send_message datapath_id, @@flow1_2_2054
-      when PORTLIST[1]
-        send_message datapath_id, @@flow1_3_0800
-        send_message datapath_id, @@flow1_3_2054
-      when PORTLIST[2]
-        send_message datapath_id, @@flow1_4_0800
-        send_message datapath_id, @@flow1_4_2054
-      end
-    end
+#    swid.each do |datapath_id|
+#      case old_port
+#      when PORTLIST[0]
+#        send_message datapath_id, @@flow1_2_0800
+#        send_message datapath_id, @@flow1_2_2054
+#      when PORTLIST[1]
+#        send_message datapath_id, @@flow1_3_0800
+#        send_message datapath_id, @@flow1_3_2054
+#      when PORTLIST[2]
+#        send_message datapath_id, @@flow1_4_0800
+#        send_message datapath_id, @@flow1_4_2054
+#      end
+#    end
     
     swid.each do |datapath_id|
       case set_port
@@ -134,22 +137,21 @@ class PortSelector < Trema::Controller
         send_message datapath_id, @@flow1_4
       end
     end
-    swid.each do |datapath_id|
+#    swid.each do |datapath_id|
 #      send_message datapath_id, @flow_d_0800
 #      send_message datapath_id, @flow_d_2054
-      case old_port
-      when PORTLIST[0]
-        send_message datapath_id, @@dflow1_2_0800
-        send_message datapath_id, @@dflow1_2_2054
-      when PORTLIST[1]
-        send_message datapath_id, @@dflow1_3_0800
-        send_message datapath_id, @@dflow1_3_2054
-      when PORTLIST[2]
-        send_message datapath_id, @@dflow1_4_0800
-        send_message datapath_id, @@dflow1_4_2054
-      end
+#      case old_port
+#      when PORTLIST[0]
+#        send_message datapath_id, @@dflow1_2_0800
+#        send_message datapath_id, @@dflow1_2_2054
+#      when PORTLIST[1]
+#        send_message datapath_id, @@dflow1_3_0800
+#        send_message datapath_id, @@dflow1_3_2054
+#      when PORTLIST[2]
+#        send_message datapath_id, @@dflow1_4_0800
+#        send_message datapath_id, @@dflow1_4_2054
+#      end
 
-    end
   end
   
   private
