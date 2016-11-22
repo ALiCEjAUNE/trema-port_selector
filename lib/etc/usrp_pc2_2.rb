@@ -27,18 +27,18 @@ i_old = 0
 
 loop do
 
-  i = rand(1..3)
-#  for i in 1..3 do
+#  i = rand(1..3)
+  for i in 1..3 do
     unless i == i_old then
       case i
       when 1 then
-        udp1.send(i.to_s, 0, sockaddr1)
+        udp1.send("", 0, sockaddr1)
       
       when 2 then
-        udp2.send(i.to_s, 0, sockaddr2)
+        udp2.send("", 0, sockaddr2)
 
       when 3 then
-        udp3.send(i.to_s, 0, sockaddr3)
+        udp3.send("", 0, sockaddr3)
       end
 #      puts (i+1)
     else 
@@ -47,7 +47,7 @@ loop do
 #    sleep(interval.to_f)
     i_old = i
     wait(interval)
-#  end
+  end
 end
 
 udp1.close
