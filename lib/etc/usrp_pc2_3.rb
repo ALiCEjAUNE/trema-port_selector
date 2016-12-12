@@ -1,15 +1,15 @@
 require "socket"
 
-def wait waittime
-    told = Time.now
-    told_unix = told.to_i+(told.usec*(10**(-6)))
-    begin
-      t = Time.now
-      t_unix = t.to_i+(t.usec*(10**(-6)))
-      t_diff = t_unix.to_f-told_unix.to_f
-    end while t_diff <= waittime.to_f
-    return t_diff
-end
+#def wait waittime
+#    told = Time.now
+#    told_unix = told.to_i+(told.usec*(10**(-6)))
+#    begin
+#      t = Time.now
+#      t_unix = t.to_i+(t.usec*(10**(-6)))
+#      t_diff = t_unix.to_f-told_unix.to_f
+#    end while t_diff <= waittime.to_f
+#    return t_diff
+#end
 
 udp1 = UDPSocket.open()
 udp2 = UDPSocket.open()
@@ -20,7 +20,7 @@ sockaddr2 = Socket.pack_sockaddr_in(50001, "192.168.100.241")
 sockaddr3 = Socket.pack_sockaddr_in(50002, "192.168.100.241")
 
 
-puts "Enter the time period.(0.001~ sec)"
+puts "Enter the time period.(1~ sec)"
 interval = gets.chop
 puts "interval #{interval} sec"
 i_old = 0
@@ -46,7 +46,7 @@ loop do
     end
 #    sleep(interval.to_f)
     i_old = i
-    wait(interval)
+    sleep interval.to_f
   end
 end
 
